@@ -6,7 +6,7 @@ The 3D-CNN Model used in this case is trained on a custom dataset consisting of 
 ### Technology Stack:
 > Python 3.8  
 TensorFlow 2.13.0
-Keras 2.13.1   
+>Keras 2.13.1   
 OpenCV 4.8.1
 MediaPipe 0.10.5
 
