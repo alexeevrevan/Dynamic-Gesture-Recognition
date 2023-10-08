@@ -1,9 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import cv2
-from sklearn.preprocessing import StandardScaler
-from time import sleep
 from model import Conv3DModel
+import mediapipe as mp
 
 # Available Gestures
 classes = [
@@ -37,10 +36,20 @@ to_predict = []
 cap = cv2.VideoCapture(0)
 image_class = ''
 
-# Сюда к распознавалке прикрутить медиапайп
+# Pose settings for MediaPipe
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(min_detection_confidence=0.5,
+                  min_tracking_confidence=0.5)
+
 while (True):
     # Camera capture frame-by-frame
     ret, frame = cap.read()
+
+    # That's where MediaPipe does its processing
+    result = pose.process(frame)
+    mp_drawing.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # This variable contains the frame and turns it to gray
 
