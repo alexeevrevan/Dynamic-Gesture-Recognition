@@ -21,3 +21,5 @@ The 3D-CNN Model used in this case is trained on a custom dataset consisting of 
 - **viedo-to-frames.py**: Video processing module for extracting frames form video 
 
 - **skeleton-to-image.py**: Frame processing module for applying skeleton to image.
+
+- **augment-data.py**: Horizontal flip of a video in order to augment dataset
