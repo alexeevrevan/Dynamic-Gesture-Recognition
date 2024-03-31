@@ -1,3 +1,8 @@
+'''
+This is the main module responsible for Gesture Recognition
+'''
+
+
 import tensorflow as tf
 import numpy as np
 import cv2

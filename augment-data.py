@@ -12,7 +12,7 @@ def mirror_image(image):
     return cv2.flip(image, 1)
 
 # Input images folder
-input_dir = 'dataset/comparison/dlc/242-f'
+input_dir = 'dataset/'
 
 # New folder for processed images
 output_dir = os.path.join(input_dir, 'augmented')

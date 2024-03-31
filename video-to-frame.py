@@ -6,7 +6,7 @@
 import cv2
 
 # Playing video from file:
-cap = cv2.VideoCapture('Gesture-Dataset/Stop.MOV')
+cap = cv2.VideoCapture('dataset/')
 currentFPS = cap.get(cv2.CAP_PROP_FPS)
 
 currentFrame = 0
@@ -14,7 +14,7 @@ n = 0
 i = 0
 
 # Change this parameter to a desired number of frames per second
-targetFPS = 10
+targetFPS = 15
 
 while True:
     ret, frame = cap.read()
