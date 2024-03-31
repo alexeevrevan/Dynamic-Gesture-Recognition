@@ -6,35 +6,36 @@ import mediapipe as mp
 
 # Available Gestures
 classes = [
-    "Move Forward",
-    "Move Back",
+    "Forward",
+    "Back",
     "Turn Right",
     "Turn Left",
-    "Full Stop",
     "No Command"
 ]
 
 
 def normalize_data(np_data):
-    # Transforms existing array into a format of (don't know, batch size, height, width, channels)
+    # Transforms video into numpy array neural network usage
+    # Shape of a single array is (video count, number of frames, height, width, number of channels)
     scaled_images = np_data.reshape(-1, 30, 64, 64, 1)
     return scaled_images
 
 
-# Creating instance of model
+# Creating instance of a 3D-CNN model
 new_model = Conv3DModel()
 
 # Initialization of model
 new_model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer=tf.keras.optimizers.legacy.Adam())
+                  optimizer=tf.keras.optimizers.Adam())
 
-# Loading weights from trained model
-new_model.load_weights('model_weights/cp-0007.ckpt/variables/variables')
+# Loading weights of a previously trained model
+new_model.load_weights('model_weights/variables/variables')
 
-# Gesture Recognition
+# Gesture Recognition variables
 to_predict = []
 cap = cv2.VideoCapture(0)
 image_class = ''
+
 
 # Pose settings for MediaPipe
 mp_drawing = mp.solutions.drawing_utils
@@ -43,17 +44,23 @@ mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(min_detection_confidence=0.5,
                   min_tracking_confidence=0.5)
 
+
+
 while (True):
     # Camera capture frame-by-frame
     ret, frame = cap.read()
 
-    # That's where MediaPipe does its processing
-    result = pose.process(frame)
-    mp_drawing.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+    result = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # This variable contains the frame and turns it to gray
+    #uncomment code block below in order to show video without processing
+    cv2.namedWindow('Human', cv2.WINDOW_NORMAL)
+    cv2.imshow('Human', frame)
 
-    to_predict.append(cv2.resize(gray, (64, 64)))  # Appends gray frames to an array for further gesture prediction
+    black_image = np.zeros(frame.shape, dtype=np.uint8)
+    mp_drawing.draw_landmarks(black_image, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+
+    gray = cv2.cvtColor(black_image, cv2.COLOR_BGR2GRAY)
+    to_predict.append(cv2.resize(gray, (64, 64)))
 
     # Takes 30 frames of gesture for prediction
     if len(to_predict) == 30:
@@ -67,10 +74,12 @@ while (True):
         to_predict = []  # Releases an array to get another batch of frames
 
     # Show the result within the frame
-    cv2.putText(frame, image_class, (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (100, 110, 50), 1, cv2.LINE_AA)
+    cv2.putText(black_image, image_class, (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
 
     # Display the resulting frame
-    cv2.imshow('Hand Gesture Recognition', frame)
+    cv2.namedWindow('Hand Gesture Recognition', cv2.WINDOW_NORMAL)
+    # uncomment code above in order to make window editable
+    cv2.imshow('Hand Gesture Recognition', black_image)
 
     # Wait for any key to quit the program
     if cv2.waitKey(1) & 0xFF == ord('q'):
