@@ -12,7 +12,7 @@ The 3D-CNN Model used in this case is trained on a custom dataset consisting of 
 
 
 ### Modules description:
-- **model.py**: consists 3D-CNN model built with Keras API
+- **model.py**: contains 3D-CNN model built with Keras API
 
 - **train-app.py**: Main module for training the 3D-CNN model, saving training results and data visualisation
 
@@ -23,3 +23,7 @@ The 3D-CNN Model used in this case is trained on a custom dataset consisting of 
 - **skeleton-to-image.py**: Frame processing module for applying skeleton to image.
 
 - **augment-data.py**: Horizontal flip of a video in order to augment dataset
+
+- **filter-one**: Outlier detector which excludes skeletons which lack main landmarks
+
+- **filter-two**: Outlier detector, excludes gestures which are out of expected range of performance
