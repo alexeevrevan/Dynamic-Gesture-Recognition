@@ -7,7 +7,6 @@ import numpy as np
 import cv2
 import tensorflow as tf
 import os
-import math
 import pandas as pd
 import matplotlib.image as img
 import matplotlib.pyplot as plt
@@ -19,29 +18,29 @@ from model import Conv3DModel
 
 # Setting gestures labels
 gestures = [
-    "Move Forward",
-    "Move Back",
+    "Forward",
+    "Back",
     "Turn Right",
     "Turn Left",
-    "Full Stop",
     "No Command"
 ]
-
 # In[3]
 
 # SKIP IF CREATED
+# Rename tool, not necessary
 
-# Folder creation script for the frames
-path = 'dataset/'
 
-for i in range(60):
-    new_folder = str(i)
-    if not os.path.exists(f'{path}{new_folder}'):
-        os.makedirs(f'dataset/{new_folder}')
-        print(f'Created folder {new_folder}.')
-    else:
-        print(f'Folder {new_folder} already exists')
+import os
+directory = 'dataset/'  # Your directory
+counter = 0
 
+for root, dirs, files in os.walk(directory):
+    for d in dirs:
+        new_name = '{:03d}'.format(counter)  # name formatting
+        os.rename(os.path.join(root, d), os.path.join(root, new_name))  # renaming
+        counter += 1
+
+print('Your folders have been renamed.')
 # In[4]
 
 # SKIP IF CREATED
@@ -49,23 +48,24 @@ for i in range(60):
 # Script to create a labeled csv file
 list_iterator = 0
 
-with open('dataset/labels.csv', mode='w', newline='') as csvfile:
+with open('dataset/comparison/labels_filtered.csv', mode='w', newline='') as csvfile:
     fieldnames = ['label', 'id']
     writer = csv.DictWriter(csvfile, delimiter=";", fieldnames=fieldnames)
     writer.writeheader()
 
-    # amount of test gestures is 60
-    for i in range(60):
+    for i in range(114):
         writer.writerow({"label": str(gestures[list_iterator]), "id": str(i)})
         list_iterator += 1
-        if list_iterator == 6:
+        if list_iterator == 3:
             list_iterator = 0
 
 # In[5]
 
-temporal_variable = pd.read_csv('dataset/train.csv', header=None, sep=';').to_dict()
+# Setting up CSV labels as targets for training
+
+temporal_variable = pd.read_csv('dataset/comparison/labels_filtered.csv', header=None, sep=';').to_dict()
 training_targets_dict = temporal_variable[0]
-temporal_variable = pd.read_csv('dataset/validation.csv', header=None, sep=';').to_dict()
+temporal_variable = pd.read_csv('dataset/comparison/labels_validation.csv', header=None, sep=';').to_dict()
 validation_targets_dict = temporal_variable[0]
 temporal_variable = None
 
@@ -78,8 +78,8 @@ print(len(validation_targets_dict))
 # In[6]
 
 # Setting up directories of data
-training_path = 'dataset/train/'
-validation_path = 'dataset/validation/'
+training_path = 'dataset/comparison/filter3/'
+validation_path = 'dataset/comparison/validation2/'
 
 training_directories = os.listdir(training_path)
 validation_directories = os.listdir(validation_path)
@@ -105,7 +105,6 @@ def unify_frames(path):
 
     return frames
 
-
 # In[8]
 
 # Resizing frames
@@ -115,13 +114,11 @@ def resize_frame(frame):
     frame = cv2.resize(frame, (64, 64))
     return frame
 
-
 # In[9]
 
 # Frame processing to return gray image
 def rgb2gray(rgb):
     return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
-
 
 # In[10]
 
@@ -181,55 +178,34 @@ validation_targets[0:20]
 
 # In[13]
 
-# Visualize the data in the current state
-fig = plt.figure()
-
-for i in range(2, 4):
-    for num, frame in enumerate(new_frames_training[i][0:18]):
-        y = fig.add_subplot(4, 5, num + 1)
-        y.imshow(frame, cmap='gray')
-
-    fig = plt.figure()
-
-plt.show()
-
-
-# In[14]
-
 # RAM cleansing
 
 def release_list(array):
     del array[:]
     del array
 
-
-# In[15]
+# In[14]
 
 # Convert training data to numbers
 training_data = np.array(new_frames_training[0:counter_training], dtype=np.float32)
 
-# In[16]
+
+# In[15]
 
 # Convert validation data to numbers
 validation_data = np.array(new_frames_validation[0:counter_validation], dtype=np.float32)
 
-# In[17]
+# In[16]
 
 # Releasing RAM
 release_list(new_frames_validation)
 release_list(new_frames_training)
 
 
-# In[18]
-
-training_data.shape
-
-# In[19]
-validation_data.shape
-
-# In[20]
+# In[17]
 
 # Training data normalization
+
 print('old mean', training_data.mean())
 scaler = StandardScaler()
 scaled_images = scaler.fit_transform(training_data.reshape(-1, 15 * 64 * 64))
@@ -237,7 +213,7 @@ print('new mean', scaled_images.mean())
 scaled_images_training = scaled_images.reshape(-1, 15, 64, 64, 1)
 print(scaled_images_training.shape)
 
-# In[21]
+# In[18]
 
 # Validation data normalization
 
@@ -248,12 +224,12 @@ print('new mean', scaled_images_two.mean())
 scaled_images_validation = scaled_images_two.reshape(-1, 15, 64, 64, 1)
 print(scaled_images_validation.shape)
 
-# In[22]
+# In[19]
 
 # Creating instance of 3D CNN model
 model = Conv3DModel()
 
-# In[23]
+# In[20]
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy()
 
 # Setting up model
@@ -261,7 +237,7 @@ model.compile(loss=loss_fn,
               optimizer=tf.keras.optimizers.Adam(),
               metrics = ['accuracy'])
 
-# In[24]
+# In[21]
 
 # Finalizing both train and validation data
 x_train = np.array(scaled_images_training) # Input train data
@@ -269,30 +245,33 @@ y_train = np.array(training_targets) # Target train data
 x_val = np.array(scaled_images_validation) # Input validation set
 y_val = np.array(validation_targets) # Target validation set
 
-# In[25]
+# In[22]
 
 print(x_train.shape)
 print(y_train.shape)
 print(x_val.shape)
 print(y_val.shape)
 
-# In[26]
+# In[23]
 
 checkpoint_path = 'model_weights/cp-{epoch:04d}.ckpt'
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
-cp_callback = tf.keras.callbacks.ModelCheckpoint(checkpoint_path, monitor="val_accuracy", verbose=1, save_best_only=True)
+cp_callback = tf.keras.callbacks.ModelCheckpoint(checkpoint_path, monitor="val_loss", verbose=1, save_best_only=True)
 
-# In[27]
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                  patience=20,
+                                                  verbose=1,
+                                                  mode='min')
+# In[24]
 
 # Well, let's start training
 history = model.fit(x_train, y_train,
                     callbacks = [cp_callback],
                     validation_data=(x_val, y_val),
-                    batch_size=64,
-                    epochs=150)
-
-# In[28]
+                    batch_size=32,
+                    epochs=120)
+# In[25]
 
 
 # Save all metrics
@@ -307,14 +286,13 @@ val_loss = metrics['val_loss']
 val_accuracy = metrics['val_accuracy']
 
 
-with open("model_weights/metrics_3.json", "w+") as f:
+with open("model_weights/full4.json", "w+") as f:
     json.dump({'train_loss' : train_loss,
                'validation_loss': val_loss,
                'train_accuracy': train_accuracy,
                'validation_accuracy': val_accuracy}, f)
 
-
-# In[28]
+# In[26]
 
 
 from numpy import arange
@@ -336,7 +314,7 @@ plt.xticks(arange(0, len(train_loss) + 1, 10))
 plt.legend(loc='best')
 plt.show()
 
-# In[29]
+# In[27]
 
 # Data visualisation for accuracies
 epochs = range(1, len(train_accuracy) + 1)
