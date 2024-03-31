@@ -7,3 +7,4 @@ dataset
 model_weights/*.png
 model_weights/*.json
 .idea
+__pycache__

@@ -18,6 +18,6 @@ The 3D-CNN Model used in this case is trained on a custom dataset consisting of 
 
 - **test-app.py**: Module for testing the trained module in realtime gesture classification
 
-- **viedo-to-frames.py**: Video processing module for extracting frames form video 
+- **video-to-frames.py**: Video processing module for extracting frames form video 
 
 - **skeleton-to-image.py**: Frame processing module for applying skeleton to image.
